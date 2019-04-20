@@ -1,5 +1,6 @@
 import { fidan, FidanValue, FidanArray } from '@fidanjs/runtime'
 
+// interface & types
 type FilterType = '' | 'active' | 'completed'
 interface Todo {
   id: number
@@ -8,6 +9,8 @@ interface Todo {
   completed: FidanValue<boolean>
 }
 
+// variables
+const STORAGE_KEY = 'fidan_todomvc'
 const hashFilter = fidan.value<FilterType>('')
 const todos = fidan.array<Todo>([])
 
@@ -25,12 +28,6 @@ const shownTodos: FidanArray<Todo> = fidan.compute(
   todos,
   hashFilter
 ) as any
-
-const removeTodo = (id) => {
-  const idx = shownTodos().findIndex((item) => item.id == id)
-  todos().splice(idx, 1)
-  todos(todos()) // ideal kullanım için bu satıra gerek kalmadan çalışılabilmeli
-}
 
 // css computations
 const footerLinkCss = (waiting: FilterType) =>
@@ -50,12 +47,16 @@ const editItemCss = (todo: Todo) =>
 
 // router
 window.addEventListener('hashchange', () => {
-  hashFilter(window.location.hash.substr(2) as any)
+  hashFilter(window.location.hash.substr(2) as FilterType)
 })
-hashFilter(window.location.hash.substr(2) as any)
+hashFilter(window.location.hash.substr(2) as FilterType)
+
+// storage
+fidan.compute(() => localStorage.setItem(STORAGE_KEY, JSON.stringify(todos())))
+todos(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'))
 
 // view
-const app = fidan.html`
+const APP = fidan.html`
 <header class="header">
 <h1>todos</h1>
 <input
@@ -94,7 +95,12 @@ const app = fidan.html`
             <label>${todo.title}</label>
             <button 
               class="destroy"
-              onclick="${(e) => removeTodo(todo.id)}"></button>
+              onclick="${(e) =>
+                todos().splice(
+                  shownTodos().findIndex((item) => item.id == todo.id),
+                  1
+                )}">
+            </button>
             </div>
             <input 
               class="edit"
@@ -127,4 +133,4 @@ const app = fidan.html`
 </footer>
 `
 
-document.querySelector('.todoapp').appendChild(app)
+document.querySelector('.todoapp').appendChild(APP)
