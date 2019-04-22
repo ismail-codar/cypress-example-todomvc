@@ -13,6 +13,7 @@ interface Todo {
 const STORAGE_KEY = 'fidan_todomvc'
 const hashFilter = fidan.value<FilterType>('')
 const todos = fidan.array<Todo>([])
+const allChecked = fidan.value(false)
 
 const shownTodos: FidanArray<Todo> = fidan.compute(
   () => {
@@ -69,7 +70,16 @@ const editItemCss = (todo: Todo) =>
 
 // footer
 const todoCount = fidan.compute(
-  () => todos().filter((item) => !item.completed()).length,
+  () => {
+    const count = todos().filter((item) => !item.completed()).length
+    if (count === 0 && !allChecked()) {
+      allChecked(true)
+    }
+    if (count && allChecked()) {
+      allChecked(false)
+    }
+    return count
+  },
   () => [todos.size]
 )
 
@@ -97,6 +107,7 @@ _savedTodos.forEach((item) => {
   item.completed = fidan.value(item.completed).depends(() => [todoCount])
 })
 todos(_savedTodos)
+allChecked(todoCount() === 0)
 appInitied = true
 
 // view
@@ -131,6 +142,7 @@ ${fidan.coditionalDom(
       id="toggle-all" 
       class="toggle-all" 
       type="checkbox"
+      checked="${allChecked}"
       onclick="${(e) =>
         todos().forEach((todo) => todo.completed(e.target.checked))}"
     />
