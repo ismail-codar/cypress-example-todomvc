@@ -178,24 +178,13 @@ const APP = fidan.html`
     <a class="${footerLinkCss('completed')}" href="#/completed">Completed</a>
   </li>
 </ul>
-${(element: Element) => {
-  const clearButton = fidan.html`<button 
-  class="clear-completed"
-  onclick="${clearCompleted}">Clear completed</button>`.firstElementChild
-  fidan.compute(
-    () => {
-      if (!element.nextElementSibling && todos().length - todoCount() > 0) {
-        element.parentElement.insertBefore(
-          clearButton,
-          element.nextElementSibling
-        )
-      } else {
-        clearButton.remove()
-      }
-    },
-    () => [todoCount]
-  )
-}}
+${fidan.coditionalDom(
+  () => todos().length - todoCount() > 0,
+  fidan.html`<button 
+    class="clear-completed"
+    onclick="${clearCompleted}">Clear completed</button>`,
+  () => [todoCount]
+)}
 </footer>
 `
 
