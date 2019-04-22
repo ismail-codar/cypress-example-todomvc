@@ -33,6 +33,13 @@ const updateTodo = (todo, title) => {
   todo.title(title)
   todo.editing(false)
 }
+const clearCompleted = (e) => {
+  const removes = []
+  todos().forEach((todo) => {
+    if (todo.completed()) removes.push(todo)
+  })
+  while (removes.length) todos().splice(todos().indexOf(removes.pop()), 1)
+}
 
 // css computations
 const footerLinkCss = (waiting: FilterType) =>
@@ -171,7 +178,24 @@ const APP = fidan.html`
     <a class="${footerLinkCss('completed')}" href="#/completed">Completed</a>
   </li>
 </ul>
-<button class="clear-completed">Clear completed</button>
+${(element: Element) => {
+  const clearButton = fidan.html`<button 
+  class="clear-completed"
+  onclick="${clearCompleted}">Clear completed</button>`.firstElementChild
+  fidan.compute(
+    () => {
+      if (!element.nextElementSibling && todos().length - todoCount() > 0) {
+        element.parentElement.insertBefore(
+          clearButton,
+          element.nextElementSibling
+        )
+      } else {
+        clearButton.remove()
+      }
+    },
+    () => [todoCount]
+  )
+}}
 </footer>
 `
 
