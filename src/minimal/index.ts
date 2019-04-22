@@ -164,8 +164,7 @@ ${fidan.coditionalDom(
                 <label>${todo.title}</label>
                 <button 
                   class="destroy"
-                  onclick="${(e) => removeTodo(todo.id)}">
-                </button>
+                  onclick="${(e) => removeTodo(todo.id)}"></button>
                 </div>
                 <input 
                   class="edit"
