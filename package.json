@@ -22,7 +22,8 @@
     "lint": "eslint --fix cypress/*/*.js",
     "effective:circle:config": "circleci config process circle.yml | sed /^#/d",
     "types": "tsc --noEmit",
-    "ts-dev": "parcel index.html --open --no-cache",
+    "ts-dev": "parcel index-dev.html --open --no-cache",
+    "ts-build": "parcel build index-dev.html --no-cache --no-source-maps --public-url ./dist",
     "yalc-link": "yalc link @fidanjs/runtime & yalc link @fidanjs/router"
   },
   "dependencies": {
