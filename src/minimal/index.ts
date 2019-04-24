@@ -15,22 +15,19 @@ const hashFilter = fidan.value<FilterType>('')
 const todos = fidan.array<Todo>([])
 const allChecked = fidan.value(false)
 
-const shownTodos: FidanArray<Todo> = fidan.compute(
-  () => {
-    let _todos = todos()
-    const filter = hashFilter()
-    if (filter !== '') {
-      _todos = _todos.filter((todo) =>
-        filter === 'active' ? !todo.completed() : todo.completed()
-      ) as any
-    }
-    return _todos
-  },
-  () => [todos, hashFilter]
-)
+const shownTodos: FidanArray<Todo> = fidan.compute(() => {
+  let _todos = todos()
+  const filter = hashFilter()
+  if (filter !== '') {
+    _todos = _todos.filter((todo) =>
+      filter === 'active' ? !todo.completed() : todo.completed()
+    ) as any
+  }
+  return _todos
+})
 
 // methods
-const updateTodo = (todo, title) => {
+const updateTodo = (todo: Todo, title: string) => {
   title = title.trim()
   if (title) {
     todo.title(title)
@@ -52,21 +49,15 @@ const clearCompleted = (e) => {
 
 // css computations
 const footerLinkCss = (waiting: FilterType) =>
-  fidan.compute(
-    () => (hashFilter() === waiting ? 'selected' : ''),
-    () => [hashFilter]
-  )
+  fidan.compute(() => (hashFilter() === waiting ? 'selected' : ''))
 
 const editItemCss = (todo: Todo) =>
-  fidan.compute(
-    () => {
-      const classes = []
-      todo.completed() && classes.push('completed')
-      todo.editing() && classes.push('editing')
-      return classes.join(' ')
-    },
-    () => [todo.completed, todo.editing]
-  )
+  fidan.compute(() => {
+    const classes = []
+    todo.completed() && classes.push('completed')
+    todo.editing() && classes.push('editing')
+    return classes.join(' ')
+  })
 
 // footer
 const todoCount = fidan.compute(
@@ -182,10 +173,7 @@ ${fidan.coditionalDom(
   </section>
   <footer class="footer">
     <span class="todo-count"><strong>${todoCount}</strong> item${fidan.compute(
-    () => {
-      return todoCount() > 1 ? 's' : ''
-    },
-    () => [todoCount]
+    () => (todoCount() > 1 ? 's' : '')
   )} left</span>
     <ul class="filters">
       <li>

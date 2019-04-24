@@ -31,3 +31,4 @@ cypress/screenshots
 .cache
 dist
 yalc.lock
+yalc.lock
