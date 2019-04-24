@@ -1,4 +1,5 @@
 import { fidan, FidanValue, FidanArray } from '@fidanjs/runtime'
+import { debounce } from '../utils'
 
 // interface & types
 type FilterType = '' | 'active' | 'completed'
@@ -81,14 +82,11 @@ window.addEventListener('hashchange', () => {
 hashFilter(window.location.hash.substr(2) as FilterType)
 
 // storage
-let appInitied = false
 const saveTodo = fidan.compute(
-  () => {
-    if (appInitied) {
-      const strTodos = JSON.stringify(todos())
-      localStorage.setItem(STORAGE_KEY, strTodos)
-    }
-  },
+  debounce(() => {
+    const strTodos = JSON.stringify(todos())
+    localStorage.setItem(STORAGE_KEY, strTodos)
+  }, 0),
   () => [todoCount]
 )
 const _savedTodos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
@@ -99,7 +97,6 @@ _savedTodos.forEach((item) => {
 })
 todos(_savedTodos)
 allChecked(todoCount() === 0)
-appInitied = true
 
 // view
 const APP = fidan.html`
