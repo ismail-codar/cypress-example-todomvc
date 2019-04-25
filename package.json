@@ -27,7 +27,7 @@
     "yalc-link": "yalc link @fidanjs/runtime & yalc link @fidanjs/router"
   },
   "dependencies": {
-    "@fidanjs/runtime": "0.0.16",
+    "@fidanjs/runtime": "0.0.18",
     "http-server": "0.11.1",
     "todomvc-app-css": "2.2.0",
     "todomvc-common": "cypress-io/todomvc-common#88b7c6359ad4a5097312d8b2a21dd539ce9f4446"
