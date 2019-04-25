@@ -1,4 +1,13 @@
-import { fidan, FidanValue, FidanArray } from '@fidanjs/runtime'
+import {
+  FidanValue,
+  FidanArray,
+  value,
+  array,
+  compute,
+  html,
+  coditionalDom,
+  htmlArrayMap,
+} from '@fidanjs/runtime'
 import { debounce } from '../utils'
 
 // interface & types
@@ -12,11 +21,11 @@ interface Todo {
 
 // variables
 const STORAGE_KEY = 'fidan_todomvc'
-const hashFilter = fidan.value<FilterType>('')
-const todos = fidan.array<Todo>([])
-const allChecked = fidan.value(false)
+const hashFilter = value<FilterType>('')
+const todos = array<Todo>([])
+const allChecked = value(false)
 
-const shownTodos: FidanArray<Todo> = fidan.compute(() => {
+const shownTodos: FidanArray<Todo> = compute(() => {
   let _todos = todos()
   const filter = hashFilter()
   if (filter !== '') {
@@ -50,10 +59,10 @@ const clearCompleted = (e) => {
 
 // css computations
 const footerLinkCss = (waiting: FilterType) =>
-  fidan.compute(() => (hashFilter() === waiting ? 'selected' : ''))
+  compute(() => (hashFilter() === waiting ? 'selected' : ''))
 
 const editItemCss = (todo: Todo) =>
-  fidan.compute(() => {
+  compute(() => {
     const classes = []
     todo.completed() && classes.push('completed')
     todo.editing() && classes.push('editing')
@@ -61,7 +70,7 @@ const editItemCss = (todo: Todo) =>
   })
 
 // footer
-const todoCount = fidan.compute(
+const todoCount = compute(
   () => {
     const count = todos().filter((item) => !item.completed()).length
     if (count === 0 && !allChecked()) {
@@ -82,7 +91,7 @@ window.addEventListener('hashchange', () => {
 hashFilter(window.location.hash.substr(2) as FilterType)
 
 // storage
-const saveTodo = fidan.compute(
+const saveTodo = compute(
   debounce(() => {
     const strTodos = JSON.stringify(todos())
     localStorage.setItem(STORAGE_KEY, strTodos)
@@ -91,110 +100,123 @@ const saveTodo = fidan.compute(
 )
 const _savedTodos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
 _savedTodos.forEach((item) => {
-  item.title = fidan.value(item.title)
-  item.editing = fidan.value(false).depends(() => [saveTodo])
-  item.completed = fidan.value(item.completed).depends(() => [todoCount])
+  item.title = value(item.title)
+  item.editing = value(false).depends(() => [saveTodo])
+  item.completed = value(item.completed).depends(() => [todoCount])
 })
 todos(_savedTodos)
 allChecked(todoCount() === 0)
 
 // view
-const APP = fidan.html`
-<header class="header">
-<h1>todos</h1>
-<input
-  class="new-todo"
-  placeholder="What needs to be done?"
-  autofocus
-  onkeypress="${(e) => {
-    if (e.key === 'Enter') {
-      const title = e.target.value.trim()
-      title &&
-        todos().push({
-          id: Math.random(),
-          title: fidan.value(title).depends(() => [saveTodo]),
-          editing: fidan.value(false),
-          completed: fidan.value(false).depends(() => [todoCount]),
-        })
-      e.target.value = ''
-    }
-  }}"
-/>
-</header>
-${fidan.coditionalDom(
-  () => todos.size() > 0,
-  () => [todos.size],
-  fidan.html`
-  <section class="main">
-    <input 
-      id="toggle-all" 
-      class="toggle-all" 
-      type="checkbox"
-      checked="${allChecked}"
-      onclick="${(e) =>
-        todos().forEach((todo) => todo.completed(e.target.checked))}"
+const APP = html`
+  <header class="header">
+    <h1>todos</h1>
+    <input
+      class="new-todo"
+      placeholder="What needs to be done?"
+      autofocus
+      onkeypress="${(e) => {
+        if (e.key === 'Enter') {
+          const title = e.target.value.trim()
+          title &&
+            todos().push({
+              id: Math.random(),
+              title: value(title).depends(() => [saveTodo]),
+              editing: value(false),
+              completed: value(false).depends(() => [todoCount]),
+            })
+          e.target.value = ''
+        }
+      }}"
     />
-    <label for="toggle-all">Mark all as complete</label>
-    <ul class="todo-list">
-        ${fidan.htmlArrayMap(
-          shownTodos,
-          (todo) => fidan.html`
-            <li
-              class="${editItemCss(todo)}" 
-              ondblclick="${(e: any) => {
-                todo.editing(true)
-                e.currentTarget.lastElementChild.focus()
-              }}">
+  </header>
+  ${coditionalDom(
+    () => todos.size() > 0,
+    () => [todos.size],
+    html`
+      <section class="main">
+        <input
+          id="toggle-all"
+          class="toggle-all"
+          type="checkbox"
+          checked="${allChecked}"
+          onclick="${(e) =>
+            todos().forEach((todo) => todo.completed(e.target.checked))}"
+        />
+        <label for="toggle-all">Mark all as complete</label>
+        <ul class="todo-list">
+          ${htmlArrayMap(
+            shownTodos,
+            (todo) => html`
+              <li
+                class="${editItemCss(todo)}"
+                ondblclick="${(e: any) => {
+                  todo.editing(true)
+                  e.currentTarget.lastElementChild.focus()
+                }}"
+              >
                 <div class="view">
-                <input class="toggle" type="checkbox" onchange="${(e) => {
-                  todo.completed(e.target.checked)
-                }}" checked="${todo.completed}" />
-                <label>${todo.title}</label>
-                <button 
-                  class="destroy"
-                  onclick="${(e) => removeTodo(todo.id)}"></button>
+                  <input
+                    class="toggle"
+                    type="checkbox"
+                    onchange="${(e) => {
+                      todo.completed(e.target.checked)
+                    }}"
+                    checked="${todo.completed}"
+                  />
+                  <label>${todo.title}</label>
+                  <button
+                    class="destroy"
+                    onclick="${(e) => removeTodo(todo.id)}"
+                  ></button>
                 </div>
-                <input 
+                <input
                   class="edit"
-                  value="${todo.title}" 
+                  value="${todo.title}"
                   onkeypress="${(e) => {
                     if (e.key === 'Enter') {
                       updateTodo(todo, e.target.value)
                     }
                   }}"
-                  onblur="${(e) => updateTodo(todo, e.target.value)}" />
-            </li>
-        `
+                  onblur="${(e) => updateTodo(todo, e.target.value)}"
+                />
+              </li>
+            `
+          )}
+        </ul>
+      </section>
+      <footer class="footer">
+        <span class="todo-count"
+          ><strong>${todoCount}</strong> item${compute(() =>
+            todoCount() > 1 ? 's' : ''
+          )}
+          left</span
+        >
+        <ul class="filters">
+          <li>
+            <a class="${footerLinkCss('')}" href="#/">All</a>
+          </li>
+          <li>
+            <a class="${footerLinkCss('active')}" href="#/active">Active</a>
+          </li>
+          <li>
+            <a class="${footerLinkCss('completed')}" href="#/completed"
+              >Completed</a
+            >
+          </li>
+        </ul>
+        ${coditionalDom(
+          () => todos().length - todoCount() > 0,
+          () => [todoCount],
+          html`
+            <button class="clear-completed" onclick="${clearCompleted}">
+              Clear completed
+            </button>
+          `
         )}
-    </ul>
-  </section>
-  <footer class="footer">
-    <span class="todo-count"><strong>${todoCount}</strong> item${fidan.compute(
-    () => (todoCount() > 1 ? 's' : '')
-  )} left</span>
-    <ul class="filters">
-      <li>
-        <a class="${footerLinkCss('')}" href="#/">All</a>
-      </li>
-      <li>
-        <a class="${footerLinkCss('active')}" href="#/active">Active</a>
-      </li>
-      <li>
-        <a class="${footerLinkCss(
-          'completed'
-        )}" href="#/completed">Completed</a>
-      </li>
-    </ul>
-    ${fidan.coditionalDom(
-      () => todos().length - todoCount() > 0,
-      () => [todoCount],
-      fidan.html`<button 
-        class="clear-completed"
-        onclick="${clearCompleted}">Clear completed</button>`
-    )}
-  </footer>
-  `
-)}
+      </footer>
+    `
+  )}
 `
 
 document.querySelector('.todoapp').appendChild(APP)
