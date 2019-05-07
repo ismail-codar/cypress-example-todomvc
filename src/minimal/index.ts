@@ -2,13 +2,12 @@ import {
   FidanValue,
   FidanArray,
   value,
-  array,
   compute,
   html,
   coditionalDom,
   htmlArrayMap,
+  debounce,
 } from '@fidanjs/runtime'
-import { debounce } from '../utils'
 
 // interface & types
 type FilterType = '' | 'active' | 'completed'
@@ -22,10 +21,10 @@ interface Todo {
 // variables
 const STORAGE_KEY = 'fidan_todomvc'
 const hashFilter = value<FilterType>('')
-const todos = array<Todo>([])
+const todos = value<Todo[]>([]) as FidanArray<Todo[]>
 const allChecked = value(false)
 
-const shownTodos: FidanArray<Todo> = compute(() => {
+const shownTodos: FidanArray<Todo[]> = compute(() => {
   let _todos = todos()
   const filter = hashFilter()
   if (filter !== '') {
@@ -70,19 +69,16 @@ const editItemCss = (todo: Todo) =>
   })
 
 // footer
-const todoCount = compute(
-  () => {
-    const count = todos().filter((item) => !item.completed()).length
-    if (count === 0 && !allChecked()) {
-      allChecked(true)
-    }
-    if (count && allChecked()) {
-      allChecked(false)
-    }
-    return count
-  },
-  () => [todos.size]
-)
+const todoCount = compute(() => {
+  const count = todos().filter((item) => !item.completed()).length
+  if (count === 0 && !allChecked()) {
+    allChecked(true)
+  }
+  if (count && allChecked()) {
+    allChecked(false)
+  }
+  return count
+}, [todos.size])
 
 // router
 window.addEventListener('hashchange', () => {
@@ -96,7 +92,7 @@ const saveTodo = compute(
     const strTodos = JSON.stringify(todos())
     localStorage.setItem(STORAGE_KEY, strTodos)
   }, 0),
-  () => [todoCount]
+  [todoCount]
 )
 const _savedTodos = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
 _savedTodos.forEach((item) => {
@@ -132,7 +128,7 @@ const APP = html`
   </header>
   ${coditionalDom(
     () => todos.size() > 0,
-    () => [todos.size],
+    [todos.size],
     html`
       <section class="main">
         <input
@@ -207,7 +203,7 @@ const APP = html`
         </ul>
         ${coditionalDom(
           () => todos().length - todoCount() > 0,
-          () => [todoCount],
+          [todoCount],
           html`
             <button class="clear-completed" onclick="${clearCompleted}">
               Clear completed
